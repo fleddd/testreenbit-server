@@ -23,7 +23,7 @@ app.use(
     store: MongoStore.create({
       mongoUrl: process.env.MONGODB_URI,
     }),
-    cookie: { secure: true },
+    cookie: { secure: true, sameSite: "none" },
   })
 );
 
