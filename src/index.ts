@@ -6,11 +6,19 @@ import dotenv from "dotenv";
 import { authRouter, chatsRouter, messageRouter } from "./routes";
 import passport from "passport";
 import session from "express-session";
+import connectMongoDBSession from "connect-mongodb-session";
 import { connectDb } from "./config/db";
 import "./config/passport";
 import { app, server } from "./config/socket";
-import MongoStore from "connect-mongo";
+
 dotenv.config();
+
+const MongoDBStore = connectMongoDBSession(session);
+
+const store = new MongoDBStore({
+  uri: process.env.MONGODB_URI as string,
+  collection: "sessions",
+});
 
 app.use(express.json());
 connectDb();
@@ -20,10 +28,12 @@ app.use(
     secret: process.env.SESSION_SECRET as string,
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({
-      mongoUrl: process.env.MONGODB_URI,
-    }),
-    cookie: { secure: true, sameSite: "none" },
+    store,
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "none",
+      httpOnly: true,
+    },
   })
 );
 
@@ -33,6 +43,7 @@ app.use(
     credentials: true,
   })
 );
+
 app.use(helmet());
 app.use(cookieparser());
 app.use(passport.initialize());
@@ -42,6 +53,6 @@ app.use("/api/auth", authRouter);
 app.use("/api/chats", chatsRouter);
 app.use("/api/message", messageRouter);
 
-server.listen(process.env.PORT || 3030, async () => {
-  console.log("server started " + process.env.PORT);
+server.listen(process.env.PORT || 3030, () => {
+  console.log("server started on port " + process.env.PORT);
 });
