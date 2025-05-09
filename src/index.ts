@@ -28,7 +28,7 @@ app.use(
     secret: process.env.SESSION_SECRET as string,
     resave: false,
     saveUninitialized: false,
-    store,
+    // store,
     cookie: {
       secure: process.env.NODE_ENV === "production",
       sameSite: "none",
