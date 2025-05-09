@@ -6,19 +6,12 @@ import dotenv from "dotenv";
 import { authRouter, chatsRouter, messageRouter } from "./routes";
 import passport from "passport";
 import session from "express-session";
-import connectMongoDBSession from "connect-mongodb-session";
+import MongoStore from "connect-mongo";
 import { connectDb } from "./config/db";
 import "./config/passport";
 import { app, server } from "./config/socket";
 
 dotenv.config();
-
-const MongoDBStore = connectMongoDBSession(session);
-
-const store = new MongoDBStore({
-  uri: process.env.MONGODB_URI as string,
-  collection: "sessions",
-});
 
 app.use(express.json());
 connectDb();
@@ -28,11 +21,13 @@ app.use(
     secret: process.env.SESSION_SECRET as string,
     resave: false,
     saveUninitialized: false,
-    // store,
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGODB_URI as string,
+      ttl: 14 * 24 * 60 * 60, // 14 days
+    }),
     cookie: {
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
-      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // Use secure in prod
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     },
   })
 );

@@ -70,14 +70,12 @@ passport.use(
     }
   )
 );
-
-passport.serializeUser((user: any, done) => {
-  done(null, user.id);
+passport.serializeUser((user, done) => {
+  done(null, user.googleId);
 });
-
 passport.deserializeUser(async (id: string, done) => {
   try {
-    const user = await User.findById(id);
+    const user = await User.findOne({ googleId: id });
     return user ? done(null, user) : done(null, null);
   } catch (err) {
     done(err, null);
